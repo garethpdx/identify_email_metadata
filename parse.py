@@ -23,14 +23,22 @@ class PhraseParser(Parser):
         self.possible_phrases = possible_phrases
         self.leader = self.Tracker()
 
-    def phrases_in_html(self):
+    def phrases_in_parseable(self):
         phrases_present = []
         formatted_html = self.format_html(self.parseable)
         for phrase in self.possible_phrases:
             if phrase in formatted_html:
                 phrases_present.append(phrase)
         return phrases_present
-    
+
+    def parse(self):
+        for phrase in self.phrases_in_parseable():
+            parse_result  = self.parse_parseable(phrase)
+            if self.is_new_leader(parse_result):
+                self.leader.update(phrase, parse_result)
+                self.optimize_parseable()
+        return self.leader.name
+
     @staticmethod
     def format_html(html):
         return html.lower()
@@ -49,16 +57,11 @@ class PhraseParser(Parser):
 
 class ChronologicalParser(PhraseParser):
 
-    def parse(self):
-        for phrase in self.phrases_in_html():
-            index = self.parseable.find(phrase)
-            if self.is_new_leader(index):
-                self.leader.update(phrase, index)
-                self.optimize_parseable()
-        return self.leader.name
+    def parse_parseable(self, phrase):
+        return self.parseable.find(phrase)
 
-    def is_new_leader(self, value):
-        if self.found_needle(value):
+    def is_new_leader(self, index):
+        if self.found_needle(index):
             return True
         
     def optimize_parseable(self):
@@ -71,13 +74,9 @@ class ChronologicalParser(PhraseParser):
         return index >= 0
 
 class PopularityParser(PhraseParser):
-    def parse(self):
-        for phrase in self.phrases_in_html():
-            count = self.count_instances(phrase)
-            if self.is_new_leader(count):
-                self.leader.update(phrase, count)
-                self.optimize_parseable()
-        return self.leader.name
+
+    def parse_parseable(self, phrase):
+        return self.count_instances(phrase)
 
     def is_new_leader(self, value):
         return value > self.leader.value
