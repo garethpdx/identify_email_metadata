@@ -56,23 +56,13 @@ class ChronologicalParser(PhraseParser):
         # string.find returns -1 when it doesn't find the needle in the haystack
         return index >= 0
 
-
-class PopularityCounter(collections.Counter):
-    @property
-    def most_common_key(self):
-        # Counter.most_common(int) -> List of tuplues (key, count) sorted in descending order by count
-        most_common = self.most_common(1)
-        leader = most_common.pop()
-        return leader[0]
-
-
 class PopularityParser(PhraseParser):
     def parse(self, html):
         phrase_instances = {}
         for phrase in self.phrases_in_html(html):
             phrase_instances[phrase] = self.count_instances(html, phrase)
         self.raise_error_if_empty(phrase_instances)
-        most_common = max(phrase_instances, key=lambda x: phrase_instances[x]) # PopularityCounter(phrase_instances)
+        most_common = max(phrase_instances, key=lambda x: phrase_instances[x])
         return most_common
 
     @staticmethod
