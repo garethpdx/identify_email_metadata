@@ -29,7 +29,14 @@ class PhraseParser(Parser):
     @staticmethod
     def format_html(html):
         return html.lower()
-       
+
+    class Tracker(object):
+        def __init__(self, name=None, value=None):
+            self.update(name, value)
+
+        def update(self, name, value):
+            self.name = name
+            self.value = value       
 
 class ChronologicalParser(PhraseParser):
 
@@ -42,14 +49,6 @@ class ChronologicalParser(PhraseParser):
                 # We're only interested in phrases that come before, not after
                 html = html[:index]
         return leader.name
-    
-    class Tracker(object):
-        def __init__(self, name=None, value=None):
-            self.update(name, value)
-
-        def update(self, name, value):
-            self.name = name
-            self.value = value
 
     @staticmethod
     def found_needle(index):
@@ -58,12 +57,12 @@ class ChronologicalParser(PhraseParser):
 
 class PopularityParser(PhraseParser):
     def parse(self, html):
-        phrase_instances = {}
+        leader = self.Tracker()
         for phrase in self.phrases_in_html(html):
-            phrase_instances[phrase] = self.count_instances(html, phrase)
-        self.raise_error_if_empty(phrase_instances)
-        most_common = max(phrase_instances, key=lambda x: phrase_instances[x])
-        return most_common
+            count = self.count_instances(html, phrase)
+            if count > leader.value:
+                leader.update(phrase, count)
+        return leader.name
 
     @staticmethod
     def count_instances(html, phrase):
