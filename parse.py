@@ -1,9 +1,12 @@
-import collections
 import re
 
 from config import COUNTRYLIST_LOCATION, LINE_SEPARATOR
 
 class Parser(object):
+
+    def __init__(self, parseable):
+        self.parseable = parseable
+
     def parse(self, parseable):
         raise NotImplemented('Method "parse" must be implemented by subclass.')
 
@@ -15,12 +18,14 @@ def _retrieve_possible_phrases():
 
 
 class PhraseParser(Parser):
-    def __init__(self, possible_phrases = _retrieve_possible_phrases()):
+    def __init__(self, parseable, possible_phrases = _retrieve_possible_phrases()):
+        super(PhraseParser, self).__init__(parseable)
         self.possible_phrases = possible_phrases
+        self.leader = self.Tracker()
 
-    def phrases_in_html(self, html):
+    def phrases_in_html(self):
         phrases_present = []
-        formatted_html = self.format_html(html)
+        formatted_html = self.format_html(self.parseable)
         for phrase in self.possible_phrases:
             if phrase in formatted_html:
                 phrases_present.append(phrase)
@@ -30,25 +35,35 @@ class PhraseParser(Parser):
     def format_html(html):
         return html.lower()
 
+    def optimize_parseable(self):
+        pass
+
     class Tracker(object):
         def __init__(self, name=None, value=None):
             self.update(name, value)
 
         def update(self, name, value):
             self.name = name
-            self.value = value       
+            self.value = value
+
 
 class ChronologicalParser(PhraseParser):
 
-    def parse(self, html):
-        leader = self.Tracker()
-        for phrase in self.phrases_in_html(html):
-            index = html.find(phrase)
-            if self.found_needle(index):
-                leader.update(phrase, index)
-                # We're only interested in phrases that come before, not after
-                html = html[:index]
-        return leader.name
+    def parse(self):
+        for phrase in self.phrases_in_html():
+            index = self.parseable.find(phrase)
+            if self.is_new_leader(index):
+                self.leader.update(phrase, index)
+                self.optimize_parseable()
+        return self.leader.name
+
+    def is_new_leader(self, value):
+        if self.found_needle(value):
+            return True
+        
+    def optimize_parseable(self):
+        # Discards excess string
+        self.parseable = self.parseable[:self.leader.value]
 
     @staticmethod
     def found_needle(index):
@@ -56,17 +71,19 @@ class ChronologicalParser(PhraseParser):
         return index >= 0
 
 class PopularityParser(PhraseParser):
-    def parse(self, html):
-        leader = self.Tracker()
-        for phrase in self.phrases_in_html(html):
-            count = self.count_instances(html, phrase)
-            if count > leader.value:
-                leader.update(phrase, count)
-        return leader.name
+    def parse(self):
+        for phrase in self.phrases_in_html():
+            count = self.count_instances(phrase)
+            if self.is_new_leader(count):
+                self.leader.update(phrase, count)
+                self.optimize_parseable()
+        return self.leader.name
 
-    @staticmethod
-    def count_instances(html, phrase):
-        return len(re.findall(phrase, html, flags=re.IGNORECASE))
+    def is_new_leader(self, value):
+        return value > self.leader.value
+
+    def count_instances(self, phrase):
+        return len(re.findall(phrase, self.parseable, flags=re.IGNORECASE))
 
     @staticmethod
     def raise_error_if_empty(phrase_instances):
@@ -76,9 +93,9 @@ class PopularityParser(PhraseParser):
 
 class SignerParser(Parser):
 
-    def parse(self, parseable):
+    def parse(self):
         pattern_matching_first_bracketed_characters = '<.*?>'
-        first_bracketed_pattern = re.search(pattern_matching_first_bracketed_characters, parseable)
+        first_bracketed_pattern = re.search(pattern_matching_first_bracketed_characters, self.parseable)
         try:
             signer_with_surrounding_brackets = first_bracketed_pattern.group()
         except AttributeError:
