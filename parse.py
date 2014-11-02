@@ -1,24 +1,17 @@
 import re
 
-from config import COUNTRYLIST_LOCATION, LINE_SEPARATOR
 
 class Parser(object):
 
-    def __init__(self, parseable):
+    def __init__(self, parseable=None):
         self.parseable = parseable
 
-    def parse(self, parseable):
+    def parse(self):
         raise NotImplemented('Method "parse" must be implemented by subclass.')
-
-def _retrieve_possible_phrases():
-    with open(COUNTRYLIST_LOCATION) as f:
-        file_content = f.read()
-        lower_file_content = file_content.lower()
-        return lower_file_content.split(LINE_SEPARATOR)
 
 
 class PhraseParser(Parser):
-    def __init__(self, parseable, possible_phrases = _retrieve_possible_phrases()):
+    def __init__(self, parseable=None, possible_phrases=None):
         super(PhraseParser, self).__init__(parseable)
         self.possible_phrases = possible_phrases
         self.leader = self.Tracker()

@@ -1,16 +1,18 @@
 """ Tests to ensure the operation of the code ample, not to be included """
 import unittest
 from pymail import Email
+import phrase
 import parse
+import config
+
+COUNTRIES = phrase.PhraseListFileFactory.factory(config.COUNTRYLIST_SOURCE['connection_string'])
 
 email_stub = {'subject': 'Donate now!',
               'html':'are we talking about niger? or canada or somewhere else?. No, niger.'
               , 'from_line': '<John Doe> newsleltter@mercycorps.org'
               , 'finished_at': '2014-10-01 12:33 PM'
-              , 'country_parser':  parse.PopularityParser}
+              , 'country_parser':  parse.PopularityParser(possible_phrases=COUNTRIES)}
 stub_metadata = {'country': 'niger', 'signer': 'John Doe'}
-
-
 
 class TestSubject(unittest.TestCase):
     def setUp(self):
@@ -40,7 +42,7 @@ class TestPopularityCountryParser(unittest.TestCase):
     def setUp(self):
         self.parseable_string = 'the countries of niger and england, but niger is newer'
         self.expected_country = 'niger'
-        self.parser = parse.PopularityParser(self.parseable_string)
+        self.parser = parse.PopularityParser(parseable=self.parseable_string, possible_phrases=COUNTRIES)
 
     def runTest(self):
         self.assertEqual(self.parser.parse(), self.expected_country)
@@ -50,7 +52,7 @@ class TestChronologyCountryParser(unittest.TestCase):
     def setUp(self):
         self.parseable_string = 'the countries of niger and england, but niger is newer'
         self.expected_country = 'niger'
-        self.parser = parse.ChronologicalParser(self.parseable_string)
+        self.parser = parse.ChronologicalParser(parseable=self.parseable_string, possible_phrases=COUNTRIES)
 
     def runTest(self):
         self.assertEqual(self.parser.parse(), self.expected_country)
