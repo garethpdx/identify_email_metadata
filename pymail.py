@@ -3,7 +3,8 @@ from parse import SignerParser
 import phrase
 
 from config import COUNTRYLIST_SOURCE
-DEFAULT_PHRASE_LIST = phrase.PhraseListFileFactory.factory(COUNTRYLIST_SOURCE['connection_string'])
+DEFAULT_PHRASE_LIST = phrase.PhraseListFileFactory.factory(connection_string=COUNTRYLIST_SOURCE.connection_string,
+                                                           parameters=COUNTRYLIST_SOURCE.parameters)
 DEFAULT_COUNTRY_PARSER = PopularityParser(possible_phrases=DEFAULT_PHRASE_LIST)
 DEFAULT_SIGNER_PARSER = SignerParser()
 
@@ -26,6 +27,3 @@ class Email(object):
     @property
     def country(self):
         return self.country_parser.parse()
-
-    def set_country_parser_phrase_options(self, phrases):
-        self.country_parser.possible_phrases = phrases
