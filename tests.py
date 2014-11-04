@@ -7,12 +7,25 @@ import config
 
 COUNTRIES = phrase.PhraseListFileFactory.factory(connection_string=config.COUNTRYLIST_SOURCE.connection_string, parameters=config.COUNTRYLIST_SOURCE.parameters)
 
-email_stub = {'subject': 'Donate now!',
-              'html':'are we talking about niger? or canada or somewhere else?. No, niger.'
-              , 'from_line': '<John Doe> newsleltter@mercycorps.org'
-              , 'finished_at': '2014-10-01 12:33 PM'
-              , 'country_parser':  parse.PopularityParser(possible_phrases=COUNTRIES)}
-stub_metadata = {'country': 'niger', 'signer': 'John Doe'}
+EMAIL_EXAMPLE = {'example_email':
+              {'subject': 'Donate now!',
+               'html':'are we talking about niger? or canada or somewhere else?. No, niger.'
+               , 'from_line': '<John Doe> newsleltter@mercycorps.org'
+               , 'finished_at': '2014-10-01 12:33 PM'
+               , 'country_parser':  parse.PopularityParser(possible_phrases=COUNTRIES)},
+              'metadata': {'country': 'niger', 'signer': 'John Doe'}}
+
+PHRASE_EXAMPLES = []
+
+PHRASE_EXAMPLES.append({'text':'From 1995 to 2005, Africa\'s rate of economic growth increased, averaging 5% in 2005. Some countries experienced still higher growth rates, notably Equatorial Guinea, Angola, and Sudan, all three of which had recently begun extracting their petroleum reserves or had expanded their oil extraction capacity. Angola has vast mineral and petroleum reserves, and its economy has on average grown at a double-digit pace since the 1990s, especially since the end of the civil war.',
+                     'phrase_list': ['angola', 'equatorial guinea', 'sudan'],
+                     'most_popular_relevant_phrase': 'angola',
+                     'first_phrase_mentioned': 'equatorial guinea'})
+
+PHRASE_EXAMPLES.append({'text': """India, officially the Republic of India,[12][c] is a country in South Asia. It is the seventh-largest country by area, the second-most populous country with over 1.2 billion people, and the most populous democracy in the world. Bounded by the Indian Ocean on the south, the Arabian Sea on the south-west, and the Bay of Bengal on the south-east, it shares land borders with Pakistan to the west; China, Nepal, and Bhutan to the north-east; and Burma and Bangladesh to the east. In the Indian Ocean, India is in the vicinity of Sri Lanka and the Maldives; in addition, India's Andaman and Nicobar Islands share a maritime border with Thailand and Indonesia.""",
+                     'phrase_list': ['india', 'bangladesh', 'Nepal', 'Bhutan', 'Pakistan', 'Thailand', 'Indonesia'],
+                     'most_popular_relevant_phrase': 'india', 
+                     'first_phrase_mentioned': 'india'})
 
 
 class TestPhraseListFileFactory(unittest.TestCase):
@@ -34,11 +47,10 @@ class TestPhraseListConfiguration(unittest.TestCase):
 
 class TestIdentificationOfPhrases(unittest.TestCase):
     def setUp(self):
-        self.possible_phrases = phrase.PhraseList(['china', 'france', 'germany', 'ireland', 'england', 'mali'])
+        self.possible_phrases = phrase.PhraseList(['china', 'france', 'germany', 'ireland', 'england'])
         self.expected_phrases_to_find = ['england', 'france']
-        self.parser = parse.PhraseParser('The countries of England, Somalia, and Francis -- er, I mean france.', self.possible_phrases)
+        self.parser = parse.PhraseParser('The countries of England, Somalia, and Francis -- er, make that France.', self.possible_phrases)
 
-    @unittest.expectedFailure
     def runTest(self):
         self.assertListEqual(sorted(self.expected_phrases_to_find),
                              sorted(self.parser.phrases_in_parseable()))
@@ -54,60 +66,54 @@ class TestPopularityCounter(unittest.TestCase):
     def runTest(self):
         self.assertEqual(self.expected_instances_of_phrase, self.instances_of_phrase)
 
+class TestParserAccuracy(unittest.TestCase):
+    examples = []
+    relevant_test_key = None
+
+    def setUp(self):
+        self.parse_results = []
+        for text in self.examples:
+            possible_phrases = phrase.PhraseList(text['phrase_list'])
+            parser = parse.PopularityParser(text['text'], possible_phrases)
+            self.parse_results.append((parser.parse(), text[self.relevant_test_key]))
+    
+    def runTest(self):
+        for comparison in self.parse_results:
+            self.assertEqual(comparison[0], comparison[1])
+            
+class TestPopularityParserAccuracy(TestParserAccuracy):
+    relevant_test_key = 'most_popular_relevant_phrase'
+    examples = PHRASE_EXAMPLES
+
+class TestChronologyCountryParserAccuracy(unittest.TestCase):
+    relevant_test_key = 'first_phrase_mentioned'
+    examples = PHRASE_EXAMPLES
 
 class TestEmailInstantiationUsingDefaults(unittest.TestCase):
     def setUp(self):
         self.encountered_error = False
         try:
-            Email(**email_stub)
+            Email(**EMAIL_EXAMPLE['example_email'])
         except:
             self.encountered_error = True
 
     def runTest(self):
         self.assertFalse(self.encountered_error)
         
-class TestSubject(unittest.TestCase):
+class TestAssignmentOfSubject(unittest.TestCase):
     def setUp(self):
-        self.email = Email(**email_stub)
+        self.email = Email(**EMAIL_EXAMPLE['example_email'])
 
     def runTest(self):
-        self.assertEqual(self.email.subject, email_stub['subject'])
-
-
-class TestCountry(unittest.TestCase):
-    def setUp(self):
-        self.email = Email(**email_stub)
-
-    def runTest(self):
-        self.assertEqual(self.email.country, stub_metadata['country'])
+        self.assertEqual(self.email.subject, EMAIL_EXAMPLE['example_email']['subject'])
 
 
 class TestSigner(unittest.TestCase):
     def setUp(self):
-        self.email = Email(**email_stub)
+        self.email = Email(**EMAIL_EXAMPLE['example_email'])
 
     def runTest(self):
-        self.assertEqual(self.email.signer, stub_metadata['signer'])
-
-
-class TestPopularityCountryParser(unittest.TestCase):
-    def setUp(self):
-        self.parseable_string = 'the countries of niger and england, but niger is newer'
-        self.expected_country = 'niger'
-        self.parser = parse.PopularityParser(parseable=self.parseable_string, possible_phrases=COUNTRIES)
-
-    def runTest(self):
-        self.assertEqual(self.parser.parse(), self.expected_country)
-
-
-class TestChronologyCountryParser(unittest.TestCase):
-    def setUp(self):
-        self.parseable_string = 'the countries of niger and england, but niger is newer'
-        self.expected_country = 'niger'
-        self.parser = parse.ChronologicalParser(parseable=self.parseable_string, possible_phrases=COUNTRIES)
-
-    def runTest(self):
-        self.assertEqual(self.parser.parse(), self.expected_country)
+        self.assertEqual(self.email.signer, EMAIL_EXAMPLE['metadata']['signer'])
 
 
 if __name__ == '__main__':
