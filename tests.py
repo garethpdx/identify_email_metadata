@@ -1,5 +1,5 @@
 """
-Test the behavior of pyemail code. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of in their own files.
+Test the behavior of pyemail code. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of an additional package.
 """
 import unittest
 
