@@ -1,5 +1,8 @@
 """
-Parse raw objects to identify relevant contents.
+Parse string-like objects for the identification of relevant information.
+
+For phrases of relevant words, use either a popularity or a chronological
+method. For from-line's, extract the first bracketed set of characters.
 
 """
 
