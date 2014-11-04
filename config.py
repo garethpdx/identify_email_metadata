@@ -9,6 +9,10 @@ class PhraseListConfiguration(object):
             self.parameters[kw] = kwargs[kw]
 
 
+class PhraseListConfigurationConnectionError(IOError):
+    pass
+
+
 COUNTRYLIST_SOURCE = PhraseListConfiguration(method='file',
                                              connection_string='./mc_countries.csv',
                                              line_separator = '\n')

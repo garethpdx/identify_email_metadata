@@ -1,10 +1,25 @@
+"""
+An email class with default parsers for signer and country, and a default
+phrase list--configuration-permitting.
+
+"""
+import logging
+
 from parse import PopularityParser
 from parse import SignerParser
-import phrase
+from phrase import PhraseListFileFactory
+from phrase import PhraseList
 
 from config import COUNTRYLIST_SOURCE
-DEFAULT_PHRASE_LIST = phrase.PhraseListFileFactory.factory(connection_string=COUNTRYLIST_SOURCE.connection_string,
-                                                           parameters=COUNTRYLIST_SOURCE.parameters)
+from config import PhraseListConfigurationConnectionError
+
+
+DEFAULT_PHRASE_LIST = PhraseList()
+try:
+    DEFAULT_PHRASE_LIST = PhraseListFileFactory.factory(connection_string=COUNTRYLIST_SOURCE.connection_string,
+                                                               parameters=COUNTRYLIST_SOURCE.parameters)
+except PhraseListConfigurationConnectionError:
+    logging.error('Unable to open configured phrase list, defaulting to empty phrase list.')
 DEFAULT_COUNTRY_PARSER = PopularityParser(possible_phrases=DEFAULT_PHRASE_LIST)
 DEFAULT_SIGNER_PARSER = SignerParser()
 
