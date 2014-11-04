@@ -1,14 +1,23 @@
+"""
+Parse raw objects to identify relevant contents.
+
+"""
+
+
 import re
 
 
 class Parser(object):
 
     def __init__(self, parseable=None):
-        self.parseable = parseable
+        self.parseable = self.format(parseable)
 
     def parse(self):
         raise NotImplemented('Method "parse" must be implemented by subclass.')
 
+    @staticmethod
+    def format(to_format):
+        return to_format
 
 class PhraseParser(Parser):
     def __init__(self, parseable=None, possible_phrases=None):
@@ -18,9 +27,8 @@ class PhraseParser(Parser):
 
     def phrases_in_parseable(self):
         phrases_present = []
-        formatted_html = self.format_html(self.parseable)
         for phrase in self.possible_phrases:
-            if phrase in formatted_html:
+            if phrase in self.parseable:
                 phrases_present.append(phrase)
         return phrases_present
 
@@ -28,16 +36,25 @@ class PhraseParser(Parser):
         for phrase in self.phrases_in_parseable():
             parse_result  = self.parse_parseable(phrase)
             if self.is_new_leader(parse_result):
-                self.leader.update(phrase, parse_result)
+                self.update_leader(phrase, parse_result)
                 self.optimize_parseable()
         return self.leader.name
 
     @staticmethod
-    def format_html(html):
-        return html.lower()
+    def format(text):
+        formatted_text = None
+        try:
+            formatted_text = text.lower()
+        except AttributeError:
+            pass
+        return formatted_text
 
     def optimize_parseable(self):
         pass
+
+    def update_leader(self, name, value):
+        self.leader.name = name
+        self.leader.value = value
 
     class Tracker(object):
         def __init__(self, name=None, value=None):
@@ -97,6 +114,7 @@ class SignerParser(Parser):
     @classmethod
     def strip_first_and_last_character(cls, bracketed_signer):
         return bracketed_signer[1:-1]
+    
 
 class ParserValueError(ValueError):
     pass
