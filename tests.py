@@ -6,7 +6,7 @@ import unittest
 from pymail import Email
 import phrase
 import parse
-import config
+import configuration
 
 
 PHRASE_EXAMPLES = []
@@ -53,7 +53,7 @@ class TestPhraseListFileFactory(unittest.TestCase):
 class TestPhraseListConfiguration(unittest.TestCase):
     def setUp(self):
         self.expected_configuration_parameters = {'line_separator': '\n'}
-        self.configuration = config.PhraseListConfiguration(None,
+        self.configuration = configuration.PhraseListConfiguration(None,
                                                             None,
                                                             line_separator='\n')
     def runTest(self):

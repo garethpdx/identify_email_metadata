@@ -9,10 +9,9 @@ from parse import PopularityParser
 from parse import SignerParser
 from phrase import PhraseListFileFactory
 from phrase import PhraseList
+from configuration import PhraseListConfigurationConnectionError
 
 from config import COUNTRYLIST_SOURCE
-from config import PhraseListConfigurationConnectionError
-
 
 DEFAULT_PHRASE_LIST = PhraseList()
 try:

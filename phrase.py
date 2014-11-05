@@ -2,7 +2,7 @@
 PhraseLists merely extend the list built-in to provide a relevantly named class.
 """
 
-from config import PhraseListConfigurationConnectionError
+from configuration import PhraseListConfigurationConnectionError
 
 class PhraseList(list):
     pass
