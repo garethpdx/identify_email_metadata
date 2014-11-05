@@ -30,5 +30,6 @@ Example (Determine country by order of appearance instead of frequency):
 >>>     email = pymail.Email(**unparsed_email)
 >>>     print('The email was signed by {0.signer}. {0.country} is the first referenced country.'.format(email))
 
-The modules are organized flatly and without a setup.py to support inspection and execution with minimal configuration or installation required.
-No 3rd party libraries are required to run the demo.
+The modules are organized flatly and without a setup script to enable inspection and execution with minimal configuration or installation.
+No 3rd party libraries are required to run the demo. With Python 2.7 installed, the demo should run with either of the following commands, depending
+on whether the Python executable is available via path 1) or not 2). 1) python demo.py, 2) demo.py.
