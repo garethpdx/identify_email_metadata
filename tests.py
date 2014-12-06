@@ -35,7 +35,7 @@ EMAIL_EXAMPLE = {'example_email':
                , 'country_parser':  parse.PopularityParser(possible_phrases=['Japan',
                                                                              'Mexico',
                                                                              'Canada'])},
-              'metadata': {'country': 'mexico', 'signer': 'John Doe'}}
+              'metadata': {'country': 'mexico', 'signer': 'john doe'}}
 
 class TestPhraseListFileFactory(unittest.TestCase):
     def setUp(self):

@@ -6,11 +6,12 @@ method. For from-line's, extract the first bracketed set of characters.
 
 """
 
-
 import re
 
+from formatter import ContentFormatter
 
 class Parser(object):
+    formatter = ContentFormatter
 
     def __init__(self, parseable=None):
         self.parseable = self.format(parseable)
@@ -18,9 +19,11 @@ class Parser(object):
     def parse(self):
         raise NotImplemented('Method "parse" must be implemented by subclass.')
 
-    @staticmethod
-    def format(to_format):
-        return to_format
+    @classmethod
+    def format(cls, to_format):
+        if to_format:
+            return cls.formatter.format(to_format)
+
 
 class PhraseParser(Parser):
     def __init__(self, parseable=None, possible_phrases=None):
