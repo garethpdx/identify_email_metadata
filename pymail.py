@@ -30,9 +30,9 @@ class Email(object):
         self.finished_at = finished_at
         self.from_line = from_line
         self.country_parser = country_parser
-        self.country_parser.parseable = self.html
+        self.country_parser.parseable = country_parser.format(self.html)
         self.signer_parser = signer_parser
-        self.signer_parser.parseable = self.from_line
+        self.signer_parser.parseable = signer_parser.format(self.from_line)
 
     @property
     def signer(self):
