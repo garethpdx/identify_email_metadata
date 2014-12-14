@@ -1,5 +1,5 @@
 """
-Test the behavior of pyemail code. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of an additional package.
+Test the identification of email metadata. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of an additional package.
 """
 import unittest
 
@@ -45,7 +45,7 @@ class TestPhraseListFileFactory(unittest.TestCase):
                                                        'new zealand'])
 
     def runTest(self):
-        self.assertListEqual(self.factory.factory('./test_files./phrase_list.csv',
+        self.assertListEqual(self.factory.factory('./test_files/phrase_list.csv',
                                                   {'line_separator': '\n'}),
                              self.expected_phrase_list)
 
