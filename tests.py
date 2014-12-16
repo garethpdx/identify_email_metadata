@@ -2,11 +2,14 @@
 Test the identification of email metadata. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of an additional package.
 """
 import unittest
+import urllib2
+import time
 
 from pymail import Email
 import phrase
 import parse
 import configuration
+import interface
 
 
 PHRASE_EXAMPLES = []
@@ -143,6 +146,56 @@ class TestSigner(unittest.TestCase):
         self.assertEqual(self.email.signer,
                          EMAIL_EXAMPLE['metadata']['signer'])
 
+
+class TestUIInitialization(unittest.TestCase):
+    def setUp(self):
+        interface_duration = 3
+        self.encountered_error = False
+        self.interface = interface.TemporaryWebInterface(interface_duration)
+        try:
+            self.interface.open_interface()
+            self.interface.close_interface()
+        except Exception:
+            self.encountered_error = True
+
+    def runTest(self):
+        self.assertFalse(self.encountered_error)
+        time.sleep(3)
+
+
+class TestUIGet(unittest.TestCase):
+    def setUp(self):
+        interface_duration = 5
+        self.interface = interface.TemporaryWebInterface(interface_duration)
+        self.interface.open_interface()
+        while not self.interface.server.initialized:
+            time.sleep(.2)
+        url = 'http://localhost:' + str(self.interface.server.port) + '/'
+        print 'url: ' + url
+        response = urllib2.urlopen(url, timeout=4)
+        self.interface.close_interface()
+        self.response_code = response.getcode()
+    def runTest(self):
+        self.assertEqual(self.response_code, 200)
+
+
+class TestHTMLPageRetrieval(unittest.TestCase):
+    def setUp(self):
+        interface_duration = 5
+        self.interface = interface.TemporaryWebInterface(interface_duration)
+        self.interface.open_interface()
+        while not self.interface.server.initialized:
+            time.sleep(.2)
+        url = 'http://localhost:' + str(self.interface.server.port) + '/test_files/test.html'
+        print 'url: ' + url
+        response = urllib2.urlopen(url, timeout=4)
+        self.interface.close_interface()
+        with open('./test_files/test.html') as f:
+            self.file_content  = f.read()
+        self.retrieved_content = response.read()
+        
+    def runTest(self):
+        self.assertEqual(self.retrieved_content.rstrip(), self.file_content.rstrip())
 
 if __name__ == '__main__':
     unittest.main()
