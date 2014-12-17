@@ -17,7 +17,7 @@ class ThreadedHTTPServer(threading.Thread):
         print 'listening on port ' + str(self.port)
         server = HTTPServer
         handler = CGIHTTPServer.CGIHTTPRequestHandler
-        handler.cgi_directories = ["/cgi-bin"]
+        handler.cgi_directories = ["/", ]
         self.httpd = server((self.host, self.port), handler)
         self.initialized = True
         self.httpd.serve_forever()
@@ -46,7 +46,7 @@ class PersistantWebInterface(object):
 
 
 if __name__ == '__main__':
-    iface = TemporaryWebInterface(30)
+    iface = TemporaryWebInterface(120)
     # iface = PersistantWebInterface()
     iface.open_interface()
     iface.close_interface()
