@@ -4,6 +4,10 @@ Test the identification of email metadata. For the sake of sharing and browsing,
 import unittest
 import urllib2
 import time
+import json
+import datetime
+import urllib
+
 
 from pymail import Email
 import phrase
@@ -160,7 +164,6 @@ class TestUIInitialization(unittest.TestCase):
 
     def runTest(self):
         self.assertFalse(self.encountered_error)
-        time.sleep(3)
 
 
 class TestUIGet(unittest.TestCase):
@@ -168,9 +171,8 @@ class TestUIGet(unittest.TestCase):
         interface_duration = 5
         self.interface = interface.TemporaryWebInterface(interface_duration)
         self.interface.open_interface()
-        while not self.interface.server.initialized:
-            time.sleep(.2)
-        url = 'http://localhost:' + str(self.interface.server.port) + '/'
+        sleep_until_interface_has_initialized(self.interface)
+        url = 'http://localhost:' + str(self.interface.server.port) + '/__init__.py'
         print 'url: ' + url
         response = urllib2.urlopen(url, timeout=4)
         self.interface.close_interface()
@@ -179,13 +181,12 @@ class TestUIGet(unittest.TestCase):
         self.assertEqual(self.response_code, 200)
 
 
-class TestHTMLPageRetrieval(unittest.TestCase):
+class TestNonCGIPageRetrieval(unittest.TestCase):
     def setUp(self):
         interface_duration = 5
         self.interface = interface.TemporaryWebInterface(interface_duration)
         self.interface.open_interface()
-        while not self.interface.server.initialized:
-            time.sleep(.2)
+        sleep_until_interface_has_initialized(self.interface)
         url = 'http://localhost:' + str(self.interface.server.port) + '/test_files/test.html'
         print 'url: ' + url
         response = urllib2.urlopen(url, timeout=4)
@@ -193,9 +194,55 @@ class TestHTMLPageRetrieval(unittest.TestCase):
         with open('./test_files/test.html') as f:
             self.file_content  = f.read()
         self.retrieved_content = response.read()
-        
+
     def runTest(self):
         self.assertEqual(self.retrieved_content.rstrip(), self.file_content.rstrip())
+
+def sleep_until_interface_has_initialized(interface):
+    while not interface.server.initialized:
+        time.sleep(.2)
+
+def url_from_interface_and_path(interface, path):
+    url = 'http://localhost:' + str(interface.server.port) + path
+    print url
+    return url
+
+class TestAccessToEmailParsingService(unittest.TestCase):
+    def setUp(self):
+        interface_duration = 5
+        self.interface = interface.TemporaryWebInterface(interface_duration)
+        self.interface.open_interface()
+        sleep_until_interface_has_initialized(self.interface)
+
+    def test_access_to_parse_interface(self):
+        encountered_error = False
+        try:
+            url = url_from_interface_and_path(self.interface, '/parse_it.py')
+            urllib2.urlopen(url, timeout=4)
+        except Exception:
+            encountered_error = True
+        self.assertFalse(encountered_error)
+
+    def test_interface_parsing(self):
+        encountered_error = False
+        try:
+            url = url_from_interface_and_path(self.interface, '/parse_it.py')
+            email = {'subject': 'subject',
+                     'html': 'the country of haiti',
+                     'finished_at': str(datetime.date(2014,11,12)),
+                     'from_line': '<ablert> albert@alb.com'}
+            co = urllib.urlencode(email)
+            r = urllib2.Request(url, co)
+            u = urllib2.urlopen(r, timeout=4)
+            content = u.read()
+            j = json.loads(content)
+        except Exception:
+            encountered_error = True
+        self.assertEqual(j['country'],'haiti')
+        self.assertFalse(encountered_error)
+
+    def tearDown(self):
+        self.interface.close_interface()
 
 if __name__ == '__main__':
     unittest.main()
