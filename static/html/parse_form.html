@@ -1,0 +1,45 @@
+<html>
+<head>
+  <title>
+</title>
+  <script src="jquery.min.js"></script>
+  <script type="text/javascript">
+$(document).ready(function(){
+    $('#parser').submit(function(event){
+	event.preventDefault();
+	email = {'from_line': $('#email_fromline').val(),
+		 'html': $('#email_html').val(),
+		 'finished_at' :'bob',
+		 'subject': 'subject'};
+	$.post('/parse_it.py', email).done(function(data){
+	    $("#signer").val(data.signer);
+	    $("#country").val(data.country);
+	});
+    });
+});
+    
+  </script>
+</head>
+<body>
+  <h1>
+  Parse
+  </h1>
+  <br />
+  <p>
+    Enter the relevant details for the email in the form below then click submit. The metadata for the email will be shown just below the form.
+  </p>
+  <form action="/" id="parser" method="post">
+    <label>From-line</label>
+    <input type="input" id="email_fromline" name="email_fromline"><br />
+    <textarea name="email_html" id="email_html"></textarea>
+    <input type="submit">
+  </form>
+  <div>
+    <h2>results</h2>
+    <label>Signer</label>
+    <input type="text" id="signer" readonly="readonly">
+    <label>Country</label>
+    <input type="text" id="country" readonly="readonly">
+  </div>
+</body>
+</html>
