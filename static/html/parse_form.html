@@ -3,7 +3,7 @@
   <title>
     Email Parsing Service
   </title>
-  <script src="jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script type="text/javascript">
   
 function parseSuccessfulResponseCallback(data){
@@ -25,7 +25,6 @@ function retrieveRawEmail(){
 
 $(document).ready(function(){
     $('#parser').submit(function(event){
-alert('submit');
  	event.preventDefault();
         email = retrieveRawEmail();
 	$.post('/parse_it.py', email).done(parseSuccessfulResponseCallback).fail(parseFailureCallback);
