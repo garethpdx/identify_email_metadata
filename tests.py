@@ -1,5 +1,5 @@
 """
-Test the identification of email metadata. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of an additional package.
+Test the identification of email metadata. For the sake of sharing and browsing,  all of the project's code tests included in this file.
 """
 import unittest
 import urllib2
@@ -34,15 +34,15 @@ PHRASE_EXAMPLES.append({'text': """India, officially the Republic of India,[12][
                      'most_popular_relevant_phrase': 'india', 
                      'first_phrase_mentioned': 'india'})
 
-EMAIL_EXAMPLE = {'example_email':
-              {'subject': 'Automobile production information.',
-               'html':'Between Canada, Japan and Mexico, in 2015 the most cars are expected to be manufactured in Mexico.'
-               , 'from_line': '<John Doe> info@irrelevantinformation.com'
-               , 'finished_at': '2014-10-01 12:33 PM'
-               , 'country_parser':  parse.PopularityParser(possible_phrases=['Japan',
-                                                                             'Mexico',
-                                                                             'Canada'])},
-              'metadata': {'country': 'mexico', 'signer': 'john doe'}}
+EMAIL_EXAMPLE = {'email':
+                 {'subject': 'Automobile production information.',
+                  'html':'Between Canada, Japan and Mexico, in 2015 the most cars are expected to be manufactured in Mexico.'
+                  , 'from_line': '<John Doe> info@irrelevantinformation.com'
+                  , 'finished_at': '2014-10-01 12:33 PM'
+                  , 'country_parser':  parse.PopularityParser(possible_phrases=['Japan',
+                                                                                'Mexico',
+                                                                                'Canada'])},
+                 'metadata': {'country': 'mexico', 'signer': 'john doe'}}
 
 class TestPhraseListFileFactory(unittest.TestCase):
     def setUp(self):
@@ -97,6 +97,7 @@ class TestPopularityCounter(unittest.TestCase):
         self.assertEqual(self.expected_instances_of_phrase,
                          self.instances_of_phrase)
 
+
 class TestParserAccuracy(unittest.TestCase):
     examples = []
     relevant_test_key = None
@@ -113,20 +114,23 @@ class TestParserAccuracy(unittest.TestCase):
     def runTest(self):
         for comparison in self.parse_results:
             self.assertEqual(comparison[0], comparison[1])
+
             
 class TestPopularityParserAccuracy(TestParserAccuracy):
     relevant_test_key = 'most_popular_relevant_phrase'
     examples = PHRASE_EXAMPLES
 
+
 class TestChronologyCountryParserAccuracy(unittest.TestCase):
     relevant_test_key = 'first_phrase_mentioned'
     examples = PHRASE_EXAMPLES
+
 
 class TestEmailInstantiationUsingDefaults(unittest.TestCase):
     def setUp(self):
         self.encountered_error = False
         try:
-            Email(**EMAIL_EXAMPLE['example_email'])
+            Email(**EMAIL_EXAMPLE['email'])
         except:
             self.encountered_error = True
 
@@ -135,16 +139,16 @@ class TestEmailInstantiationUsingDefaults(unittest.TestCase):
         
 class TestAssignmentOfSubject(unittest.TestCase):
     def setUp(self):
-        self.email = Email(**EMAIL_EXAMPLE['example_email'])
+        self.email = Email(**EMAIL_EXAMPLE['email'])
 
     def runTest(self):
         self.assertEqual(self.email.subject,
-                         EMAIL_EXAMPLE['example_email']['subject'])
+                         EMAIL_EXAMPLE['email']['subject'])
 
 
 class TestSigner(unittest.TestCase):
     def setUp(self):
-        self.email = Email(**EMAIL_EXAMPLE['example_email'])
+        self.email = Email(**EMAIL_EXAMPLE['email'])
 
     def runTest(self):
         self.assertEqual(self.email.signer,
@@ -171,10 +175,11 @@ def sleep_until_interface_has_initialized(interface):
     while not interface.server.initialized:
         time.sleep(.5)
 
+
 def url_from_interface_and_path(interface, path):
     url = 'http://localhost:' + str(interface.server.port) + path
-    print url
     return url
+
 
 class TestWebInterface(unittest.TestCase):
     interface_duration = 15
@@ -223,7 +228,7 @@ class TestWebInterface(unittest.TestCase):
             j = json.loads(content)
         except Exception:
             encountered_error = True
-        self.assertEqual(j['country'],'haiti')
+        self.assertEqual(j['country'], 'haiti')
         self.assertFalse(encountered_error)
 
     @classmethod
