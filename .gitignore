@@ -5,3 +5,7 @@
 *.pyc
 *.gitignore~
 *.pyc
+*.html~
+*.org
+*.org~
+static/html/jquery.min.js
