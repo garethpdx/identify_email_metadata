@@ -1,9 +1,18 @@
 Identify Email Metadata
 =====
 
-Parse emails to determine who symbolically sent the message and what country is the focus of the email.
+Parse emails to determine who symbolically sent the message and what country is the focus of the email using either a Python API or an HTTP API.
 
 Two country parsers are included, enabling the email's country to be determined based on the frequency of references or by the order of appearance.
+
+HTTP
+----
+
+To initiate the HTTP interface, execute interface.py. It will initate a CGIHTTPServer that listens on a port between 8000 and 8099. To use the web-interface, navigate to /static/html/parse_form.html using your browser. If the webserver runs on port 8080, open http://localhost:8080/static/html/parse_form.html.
+
+Python
+----
+
 
 Example (Using default: Determine country by frequency):
 
