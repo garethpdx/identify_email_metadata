@@ -158,7 +158,8 @@ class TestUIInitialization(unittest.TestCase):
         self.interface = interface.TemporaryWebInterface(interface_duration)
         try:
             self.interface.open_interface()
-            self.interface.close_interface()
+            sleep_until_interface_has_initialized(self.interface)
+            self.interface.shutdown()
         except Exception:
             self.encountered_error = True
 
@@ -166,53 +167,37 @@ class TestUIInitialization(unittest.TestCase):
         self.assertFalse(self.encountered_error)
 
 
-class TestUIGet(unittest.TestCase):
-    def setUp(self):
-        interface_duration = 5
-        self.interface = interface.TemporaryWebInterface(interface_duration)
-        self.interface.open_interface()
-        sleep_until_interface_has_initialized(self.interface)
-        url = 'http://localhost:' + str(self.interface.server.port) + '/__init__.py'
-        print 'url: ' + url
-        response = urllib2.urlopen(url, timeout=4)
-        self.interface.close_interface()
-        self.response_code = response.getcode()
-    def runTest(self):
-        self.assertEqual(self.response_code, 200)
-
-
-class TestNonCGIPageRetrieval(unittest.TestCase):
-    def setUp(self):
-        interface_duration = 5
-        self.interface = interface.TemporaryWebInterface(interface_duration)
-        self.interface.open_interface()
-        sleep_until_interface_has_initialized(self.interface)
-        url = 'http://localhost:' + str(self.interface.server.port) + '/test_files/test.html'
-        print 'url: ' + url
-        response = urllib2.urlopen(url, timeout=4)
-        self.interface.close_interface()
-        with open('./test_files/test.html') as f:
-            self.file_content  = f.read()
-        self.retrieved_content = response.read()
-
-    def runTest(self):
-        self.assertEqual(self.retrieved_content.rstrip(), self.file_content.rstrip())
-
 def sleep_until_interface_has_initialized(interface):
     while not interface.server.initialized:
-        time.sleep(.2)
+        time.sleep(.5)
 
 def url_from_interface_and_path(interface, path):
     url = 'http://localhost:' + str(interface.server.port) + path
     print url
     return url
 
-class TestAccessToEmailParsingService(unittest.TestCase):
-    def setUp(self):
-        interface_duration = 5
-        self.interface = interface.TemporaryWebInterface(interface_duration)
-        self.interface.open_interface()
-        sleep_until_interface_has_initialized(self.interface)
+class TestWebInterface(unittest.TestCase):
+    interface_duration = 15
+
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = interface.TemporaryWebInterface(cls.interface_duration)
+        cls.interface.open_interface()
+        sleep_until_interface_has_initialized(cls.interface)
+
+    def test_non_cgi_page_retrieval(self):
+        url = url_from_interface_and_path(self.interface, '/test_files/test.html')
+        response = urllib2.urlopen(url, timeout=4)
+        with open('./test_files/test.html') as f:
+            self.file_content  = f.read()
+        self.retrieved_content = response.read()
+        self.assertEqual(self.retrieved_content.rstrip(), self.file_content.rstrip())
+
+    def test_cgi_page_retrieval(self):
+        url = url_from_interface_and_path(self.interface, '/__init__.py')
+        response = urllib2.urlopen(url, timeout=4)
+        self.response_code = response.getcode()
+        self.assertEqual(self.response_code, 200)
 
     def test_access_to_parse_interface(self):
         encountered_error = False
@@ -241,8 +226,9 @@ class TestAccessToEmailParsingService(unittest.TestCase):
         self.assertEqual(j['country'],'haiti')
         self.assertFalse(encountered_error)
 
-    def tearDown(self):
-        self.interface.close_interface()
+    @classmethod
+    def tearDownClass(cls):
+        cls.interface.shutdown()
 
 if __name__ == '__main__':
     unittest.main()
