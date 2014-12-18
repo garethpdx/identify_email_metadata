@@ -22,31 +22,37 @@ class ThreadedHTTPServer(threading.Thread):
         self.initialized = True
         self.httpd.serve_forever()
 
-        
-class TemporaryWebInterface(object):
-    def __init__(self, duration_in_seconds=10):
-        self.duration_in_seconds = duration_in_seconds
-        self.server = None
 
-    def open_interface(self):
+class WebInterface(object):
+    def __init__(self):
         self.server = ThreadedHTTPServer()
+    
+    def open_interface(self):
         self.server.start()
 
-    def close_interface(self):
-        self.server.join(self.duration_in_seconds)
+    def shutdown(self):
         self.server.httpd.shutdown()
 
 
-class PersistantWebInterface(object):
+class TemporaryWebInterface(WebInterface):
+    def __init__(self, duration_in_seconds=10):
+        self.duration_in_seconds = duration_in_seconds
+        super(TemporaryWebInterface, self).__init__()
+
+    def initiate_timeout(self):
+        self.server.join(self.duration_in_seconds)
+        self.shutdown()
+
+
+class PersistantWebInterface(WebInterface):
     def open_interface(self):
-        ift = ThreadedHTTPServer()
-        ift.start()
-        ift.join()
-        ift.httpd.shutdown()
+        self.server.start()
+        self.server.join()
+        self.server.httpd.shutdown()
 
 
 if __name__ == '__main__':
     iface = TemporaryWebInterface(120)
     # iface = PersistantWebInterface()
     iface.open_interface()
-    iface.close_interface()
+    iface.initiate_timeout()
