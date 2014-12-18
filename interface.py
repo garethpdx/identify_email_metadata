@@ -3,7 +3,7 @@ import CGIHTTPServer
 from  BaseHTTPServer import HTTPServer
 import random
 import threading
-
+import json
 
 class ThreadedHTTPServer(threading.Thread):
     daemon = True
@@ -49,6 +49,26 @@ class PersistantWebInterface(WebInterface):
         self.server.start()
         self.server.join()
         self.server.httpd.shutdown()
+
+
+class ParseInterfaceResponse(object):
+    def render_response(self):
+        print json.dumps(self.prepare_json())
+
+    def prepare_json(self):
+        return ""
+
+class SuccessfulParseResponse(ParseInterfaceResponse):
+    def __init__(self, email):
+        self.email = email
+
+    def prepare_json(self):
+        return {'country': self.email.country,
+                'signer': self.email.signer}
+
+class FailedParseResponse(ParseInterfaceResponse):
+    def prepare_json(self):
+        return {'error': 'An error has occured'}
 
 
 if __name__ == '__main__':
