@@ -1,12 +1,19 @@
 """
-Test the behavior of pyemail code. For the sake of sharing and browsing,  all of the project's code tests included in this file, instead of an additional package.
+Test the identification of email metadata. For the sake of sharing and browsing,  all of the project's code tests included in this file.
 """
 import unittest
+import urllib2
+import time
+import json
+import datetime
+import urllib
+
 
 from pymail import Email
 import phrase
 import parse
 import configuration
+import interface
 
 
 PHRASE_EXAMPLES = []
@@ -27,15 +34,15 @@ PHRASE_EXAMPLES.append({'text': """India, officially the Republic of India,[12][
                      'most_popular_relevant_phrase': 'india', 
                      'first_phrase_mentioned': 'india'})
 
-EMAIL_EXAMPLE = {'example_email':
-              {'subject': 'Automobile production information.',
-               'html':'Between Canada, Japan and Mexico, in 2015 the most cars are expected to be manufactured in Mexico.'
-               , 'from_line': '<John Doe> info@irrelevantinformation.com'
-               , 'finished_at': '2014-10-01 12:33 PM'
-               , 'country_parser':  parse.PopularityParser(possible_phrases=['Japan',
-                                                                             'Mexico',
-                                                                             'Canada'])},
-              'metadata': {'country': 'mexico', 'signer': 'john doe'}}
+EMAIL_EXAMPLE = {'email':
+                 {'subject': 'Automobile production information.',
+                  'html':'Between Canada, Japan and Mexico, in 2015 the most cars are expected to be manufactured in Mexico.'
+                  , 'from_line': '<John Doe> info@irrelevantinformation.com'
+                  , 'finished_at': '2014-10-01 12:33 PM'
+                  , 'country_parser':  parse.PopularityParser(possible_phrases=['Japan',
+                                                                                'Mexico',
+                                                                                'Canada'])},
+                 'metadata': {'country': 'mexico', 'signer': 'john doe'}}
 
 class TestPhraseListFileFactory(unittest.TestCase):
     def setUp(self):
@@ -45,7 +52,7 @@ class TestPhraseListFileFactory(unittest.TestCase):
                                                        'new zealand'])
 
     def runTest(self):
-        self.assertListEqual(self.factory.factory('./test_files./phrase_list.csv',
+        self.assertListEqual(self.factory.factory('./test_files/phrase_list.csv',
                                                   {'line_separator': '\n'}),
                              self.expected_phrase_list)
 
@@ -90,6 +97,7 @@ class TestPopularityCounter(unittest.TestCase):
         self.assertEqual(self.expected_instances_of_phrase,
                          self.instances_of_phrase)
 
+
 class TestParserAccuracy(unittest.TestCase):
     examples = []
     relevant_test_key = None
@@ -106,20 +114,23 @@ class TestParserAccuracy(unittest.TestCase):
     def runTest(self):
         for comparison in self.parse_results:
             self.assertEqual(comparison[0], comparison[1])
+
             
 class TestPopularityParserAccuracy(TestParserAccuracy):
     relevant_test_key = 'most_popular_relevant_phrase'
     examples = PHRASE_EXAMPLES
 
+
 class TestChronologyCountryParserAccuracy(unittest.TestCase):
     relevant_test_key = 'first_phrase_mentioned'
     examples = PHRASE_EXAMPLES
+
 
 class TestEmailInstantiationUsingDefaults(unittest.TestCase):
     def setUp(self):
         self.encountered_error = False
         try:
-            Email(**EMAIL_EXAMPLE['example_email'])
+            Email(**EMAIL_EXAMPLE['email'])
         except:
             self.encountered_error = True
 
@@ -128,21 +139,101 @@ class TestEmailInstantiationUsingDefaults(unittest.TestCase):
         
 class TestAssignmentOfSubject(unittest.TestCase):
     def setUp(self):
-        self.email = Email(**EMAIL_EXAMPLE['example_email'])
+        self.email = Email(**EMAIL_EXAMPLE['email'])
 
     def runTest(self):
         self.assertEqual(self.email.subject,
-                         EMAIL_EXAMPLE['example_email']['subject'])
+                         EMAIL_EXAMPLE['email']['subject'])
 
 
 class TestSigner(unittest.TestCase):
     def setUp(self):
-        self.email = Email(**EMAIL_EXAMPLE['example_email'])
+        self.email = Email(**EMAIL_EXAMPLE['email'])
 
     def runTest(self):
         self.assertEqual(self.email.signer,
                          EMAIL_EXAMPLE['metadata']['signer'])
 
+
+class TestUIInitialization(unittest.TestCase):
+    def setUp(self):
+        interface_duration = 3
+        self.encountered_error = False
+        self.interface = interface.TemporaryWebInterface(interface_duration)
+        try:
+            self.interface.open_interface()
+            sleep_until_interface_has_initialized(self.interface)
+            self.interface.shutdown()
+        except Exception:
+            self.encountered_error = True
+
+    def runTest(self):
+        self.assertFalse(self.encountered_error)
+
+
+def sleep_until_interface_has_initialized(interface):
+    while not interface.server.initialized:
+        time.sleep(.5)
+
+
+def url_from_interface_and_path(interface, path):
+    url = 'http://localhost:' + str(interface.server.port) + path
+    return url
+
+
+class TestWebInterface(unittest.TestCase):
+    interface_duration = 15
+
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = interface.TemporaryWebInterface(cls.interface_duration)
+        cls.interface.open_interface()
+        sleep_until_interface_has_initialized(cls.interface)
+
+    def test_non_cgi_page_retrieval(self):
+        url = url_from_interface_and_path(self.interface, '/test_files/test.html')
+        response = urllib2.urlopen(url, timeout=4)
+        with open('./test_files/test.html') as f:
+            self.file_content  = f.read()
+        self.retrieved_content = response.read()
+        self.assertEqual(self.retrieved_content.rstrip(), self.file_content.rstrip())
+
+    def test_cgi_page_retrieval(self):
+        url = url_from_interface_and_path(self.interface, '/__init__.py')
+        response = urllib2.urlopen(url, timeout=4)
+        self.response_code = response.getcode()
+        self.assertEqual(self.response_code, 200)
+
+    def test_access_to_parse_interface(self):
+        encountered_error = False
+        try:
+            url = url_from_interface_and_path(self.interface, '/parse_it.py')
+            urllib2.urlopen(url, timeout=4)
+        except Exception:
+            encountered_error = True
+        self.assertFalse(encountered_error)
+
+    def test_interface_parsing(self):
+        encountered_error = False
+        try:
+            url = url_from_interface_and_path(self.interface, '/parse_it.py')
+            email = {'subject': 'subject',
+                     'html': 'the country of haiti',
+                     'finished_at': str(datetime.date(2014,11,12)),
+                     'from_line': '<ablert> albert@alb.com'}
+            co = urllib.urlencode(email)
+            r = urllib2.Request(url, co)
+            u = urllib2.urlopen(r, timeout=4)
+            content = u.read()
+            j = json.loads(content)
+        except Exception:
+            encountered_error = True
+        self.assertEqual(j['country'], 'haiti')
+        self.assertFalse(encountered_error)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.interface.shutdown()
 
 if __name__ == '__main__':
     unittest.main()
