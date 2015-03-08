@@ -235,5 +235,32 @@ class TestWebInterface(unittest.TestCase):
     def tearDownClass(cls):
         cls.interface.shutdown()
 
+
+class TestPersistance(unittest.TestCase):
+    def test_persister_instantiation(self):
+        from persister import SQLPersister, SQLLiteDriver
+        encountered_error = False
+        sqlite = SQLLiteDriver('')
+        try:
+            SQLPersister(sqlite)
+        except:
+            encountered_error = True
+        self.assertFalse(encountered_error)
+
+    def test_sqlite_driver_instantiation(self):
+        from persister import SQLLiteDriver
+        loc = r'C:\Users\gareth\Documents\code\repos\identify_email_metadata\identify_email_metadata\test_files\test.db'
+        self.assertTrue(SQLLiteDriver(loc))
+
+    def test_send_to_persister(self):
+        email = Email(**EMAIL_EXAMPLE['email'])
+        from persister import SQLPersister, awaiting_persistance, SQLLiteDriver
+        loc = r'C:\Users\gareth\Documents\code\repos\identify_email_metadata\identify_email_metadata\test_files\test.db'
+        sqlite = SQLLiteDriver(loc)
+        db = SQLPersister(sqlite)
+        awaiting_persistance.append(email)
+        db.record_results(awaiting_persistance)
+
+
 if __name__ == '__main__':
     unittest.main()
