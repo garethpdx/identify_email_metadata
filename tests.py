@@ -136,6 +136,7 @@ class TestEmailInstantiationUsingDefaults(unittest.TestCase):
 
     def runTest(self):
         self.assertFalse(self.encountered_error)
+
         
 class TestAssignmentOfSubject(unittest.TestCase):
     def setUp(self):
@@ -144,6 +145,19 @@ class TestAssignmentOfSubject(unittest.TestCase):
     def runTest(self):
         self.assertEqual(self.email.subject,
                          EMAIL_EXAMPLE['email']['subject'])
+
+
+class TestAssignmentofCountry(unittest.TestCase):
+    def setUp(self):
+        self.email = Email(**EMAIL_EXAMPLE['email'])
+
+    def runTest(self):
+        self.assertEqual(self.email.country,
+                         EMAIL_EXAMPLE['metadata']['country'])
+
+
+class TestCountryParserSpecification(unittest.TestCase):
+    pass
 
 
 class TestSigner(unittest.TestCase):
@@ -242,10 +256,16 @@ class TestPersistance(unittest.TestCase):
         encountered_error = False
         sqlite = SQLLiteDriver('')
         try:
-            SQLPersister(sqlite)
+            SQLPersister(sqlite, fields=['bob'])
         except:
             encountered_error = True
         self.assertFalse(encountered_error)
+
+    def test_converter(self):
+        from persister import SQLConverter
+        email = Email(**EMAIL_EXAMPLE['email'])
+        expected_phrase = ('subject', "'" + email.subject + "'")
+        self.assertEqual(expected_phrase, SQLConverter.convert(email, ['subject']))
 
     def test_sqlite_driver_instantiation(self):
         from persister import SQLLiteDriver
@@ -254,12 +274,14 @@ class TestPersistance(unittest.TestCase):
 
     def test_send_to_persister(self):
         email = Email(**EMAIL_EXAMPLE['email'])
-        from persister import SQLPersister, awaiting_persistance, SQLLiteDriver
+        from persister import SQLPersister, awaiting_persistance, SQLDebugDriver
         loc = r'C:\Users\gareth\Documents\code\repos\identify_email_metadata\identify_email_metadata\test_files\test.db'
-        sqlite = SQLLiteDriver(loc)
-        db = SQLPersister(sqlite)
+        driver = SQLDebugDriver(loc)
+        db = SQLPersister(driver, fields=['subject', 'country', 'signer'])
         awaiting_persistance.append(email)
         db.record_results(awaiting_persistance)
+        expected_sql = "INSERT INTO email_metadata (signer, country, subject) values ('{0.signer}', '{0.country}', '{0.subject}')".format(email)
+        self.assertEqual(expected_sql, driver.captured_command)
 
 
 if __name__ == '__main__':
