@@ -1,5 +1,5 @@
 """
-Edit this script to configure new phrase data sources.
+Edit this script to configure new phrase data sources and persistence options.
 
 """
 
@@ -10,4 +10,4 @@ COUNTRYLIST_SOURCE = PhraseListConfiguration(method='file',
                                              line_separator = '\n')
 
 RECORD_API_RESULTS = False
-SQLITE_DB = r'C:\Users\\gareth\Documents\code\\repos\\identify_email_metadata\\identify_email_metadata\test.db'
+SQLITE_DB = ''
