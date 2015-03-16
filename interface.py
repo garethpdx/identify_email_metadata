@@ -5,8 +5,10 @@ import random
 import threading
 import json
 
+
 class ThreadedHTTPServer(threading.Thread):
     daemon = True
+
     def __init__(self):
         self.initialized = False
         super(ThreadedHTTPServer, self).__init__()
