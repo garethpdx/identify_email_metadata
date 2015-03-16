@@ -1,9 +1,9 @@
 Identify Email Metadata
 =====
 
-Parse emails to determine who symbolically sent the message and what country is the focus of the email using either a Python API or an HTTP API.
+Parse emails to determine the sender's symbolic persona as well as the country that is the focus of the email using either a Python API or an HTTP API.
 
-Two country parsers are included, enabling the email's country to be determined based on the frequency of references or by the order of appearance.
+Two country parsers are included, enabling the email's country to be determined based on the frequency of references or by the order of appearance. Other phrase lists can replace the default focus of this project.
 
 HTTP
 ----
@@ -12,7 +12,6 @@ To initiate the HTTP interface, execute interface.py. It will initate a CGIHTTPS
 
 Python
 ----
-
 
 Example (Using default: Determine country by frequency):
 
@@ -41,3 +40,8 @@ Example (Determine country by order of appearance instead of frequency):
 The modules are organized flatly and without setup.py to enable inspection and execution with minimal configuration or installation.
 No 3rd party libraries are required to run the demo. With Python 2.7 installed, the demo should run with either of the following commands, "python demo.py" or "demo.py", depending
 on whether the Python executable is available via path or not, respectively.
+
+Persistence
+-----------
+
+The HTTP API supports the persistence of results into a sqlite database. It supports the logging of subject, country, and sender out of the box. The logging is disabled by default, but can be enabled and configured in config.py. The database must be manually configured before use and should include a table named email_metadata that consists of columns for all the data points to be logged.
