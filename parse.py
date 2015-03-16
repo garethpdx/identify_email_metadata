@@ -28,7 +28,7 @@ class Parser(object):
 class PhraseParser(Parser):
     def __init__(self, parseable=None, possible_phrases=None):
         super(PhraseParser, self).__init__(parseable)
-        self.possible_phrases = possible_phrases
+        self.possible_phrases = [self.format(phrase) for phrase in possible_phrases]
         self.leader = self.Tracker()
 
     def phrases_in_parseable(self):
