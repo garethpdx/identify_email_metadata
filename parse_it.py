@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import cgi
 
 from pymail import Email
